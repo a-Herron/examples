@@ -20,6 +20,7 @@ namespace DotNetServerless.Application.Handlers
 
     public async Task<Item> Handle(GetItemRequest request, CancellationToken cancellationToken)
     {
+      return new Item{Id = "test", Code="a code", Description ="does this work?", IsChecked = true};
       var result = await _itemRepository.GetById<Item>(request.Id.ToString(), cancellationToken);
       return result.FirstOrDefault();
     }

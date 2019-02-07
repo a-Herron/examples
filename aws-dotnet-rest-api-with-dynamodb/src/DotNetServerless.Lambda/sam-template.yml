@@ -1,0 +1,263 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'SAM template for Serverless framework service: '
+Resources:
+  ItemsDynamoDbTable:
+    Type: 'AWS::DynamoDB::Table'
+    DeletionPolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+        - AttributeName: Code
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+        - AttributeName: Code
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: testing
+  TestfeatureDevCreate:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: >-
+        DotNetServerless.Lambda::DotNetServerless.Lambda.Functions.CreateItemFunction::Run
+      Runtime: dotnetcore2.1
+      CodeUri: bin/release/netcoreapp2.1/deploy-package.zip
+      MemorySize: 128
+      Timeout: 3
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:*'
+              Resource: 'arn:aws:dynamodb:us-east-1:*:table/testing'
+      Environment:
+        Variables:
+          DynamoDbConfiguration__TableName: testing
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: /items
+            Method: post
+            RestApiId:
+              Ref: Testfeature
+  Testfeature:
+    Type: 'AWS::Serverless::Api'
+    Properties:
+      StageName: dev
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title:
+            Ref: 'AWS::StackName'
+        paths:
+          /items:
+            options:
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{ "statusCode" : 200 }'
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''options,post,put'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    responseTemplates:
+                      application/json: '{}'
+              responses:
+                '200':
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+            post:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri:
+                  'Fn::Sub': >-
+                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestfeatureDevCreate.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''post'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    responseTemplates:
+                      application/json: '{}'
+              responses:
+                '200':
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+            put:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri:
+                  'Fn::Sub': >-
+                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestfeatureDevUpdate.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''options,post,put'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    responseTemplates:
+                      application/json: '{}'
+              responses:
+                '200':
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+          '/items/{id}':
+            options:
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{ "statusCode" : 200 }'
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''get'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    responseTemplates:
+                      application/json: '{}'
+              responses:
+                '200':
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri:
+                  'Fn::Sub': >-
+                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TestfeatureDevGet.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''get'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    responseTemplates:
+                      application/json: '{}'
+              responses:
+                '200':
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+  TestfeatureDevCreateLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    DependsOn:
+      - TestfeatureDevCreate
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName:
+        Ref: TestfeatureDevCreate
+      Principal: apigateway.amazonaws.com
+  TestfeatureDevGet:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: >-
+        DotNetServerless.Lambda::DotNetServerless.Lambda.Functions.GetItemFunction::Run
+      Runtime: dotnetcore2.1
+      CodeUri: bin/release/netcoreapp2.1/deploy-package.zip
+      MemorySize: 128
+      Timeout: 3
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:*'
+              Resource: 'arn:aws:dynamodb:us-east-1:*:table/testing'
+      Environment:
+        Variables:
+          DynamoDbConfiguration__TableName: testing
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: '/items/{id}'
+            Method: get
+            RestApiId:
+              Ref: Testfeature
+  TestfeatureDevGetLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    DependsOn:
+      - TestfeatureDevGet
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName:
+        Ref: TestfeatureDevGet
+      Principal: apigateway.amazonaws.com
+  TestfeatureDevUpdate:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: >-
+        DotNetServerless.Lambda::DotNetServerless.Lambda.Functions.UpdateItemFunction::Run
+      Runtime: dotnetcore2.1
+      CodeUri: bin/release/netcoreapp2.1/deploy-package.zip
+      MemorySize: 128
+      Timeout: 3
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'dynamodb:*'
+              Resource: 'arn:aws:dynamodb:us-east-1:*:table/testing'
+      Environment:
+        Variables:
+          DynamoDbConfiguration__TableName: testing
+      Events:
+        Event1:
+          Type: Api
+          Properties:
+            Path: /items
+            Method: put
+            RestApiId:
+              Ref: Testfeature
+  TestfeatureDevUpdateLambdaPermission:
+    Type: 'AWS::Lambda::Permission'
+    DependsOn:
+      - TestfeatureDevUpdate
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName:
+        Ref: TestfeatureDevUpdate
+      Principal: apigateway.amazonaws.com

@@ -3,6 +3,10 @@ service: ${file(env.configs.yml):feature}
 
 frameworkVersion: ">=1.6.0 <2.1.0"
 
+plugins:
+  - serverless-offline
+  - serverless-sam
+
 provider:
   name: aws
   stackName: ${file(env.configs.yml):feature}-${file(env.configs.yml):environment}
@@ -11,7 +15,7 @@ provider:
   accountId: ${file(env.configs.yml):accountId}
   environment:
     DynamoDbConfiguration__TableName: ${file(env.configs.yml):dynamoTable}
-    
+
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -20,7 +24,7 @@ provider:
 
 package:
   artifact: bin/release/netcoreapp2.1/deploy-package.zip
-  
+
 functions:
   create:
     handler: DotNetServerless.Lambda::DotNetServerless.Lambda.Functions.CreateItemFunction::Run
@@ -66,4 +70,4 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DynamoDbConfiguration__TableName}
-        
+

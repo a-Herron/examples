@@ -27,13 +27,15 @@ namespace DotNetServerless.Lambda.Functions
     [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
     public async Task<APIGatewayProxyResponse> Run(APIGatewayProxyRequest request)
     {
-      var requestModel = new GetItemRequest {Id = new Guid(request.PathParameters["id"])}; 
+      Console.WriteLine("TESTING THIS STUFF");
+      Console.WriteLine(request.ToString());
+      var requestModel = new GetItemRequest {Id = new Guid(request.PathParameters["id"])};
       var mediator = _serviceProvider.GetService<IMediator>();
 
       var result = await mediator.Send(requestModel);
-      
-      return result == null ? 
-        new APIGatewayProxyResponse {StatusCode = 404} : 
+
+      return result == null ?
+        new APIGatewayProxyResponse {StatusCode = 404} :
         new APIGatewayProxyResponse { StatusCode =  200,  Body = JsonConvert.SerializeObject(result)};
     }
   }
